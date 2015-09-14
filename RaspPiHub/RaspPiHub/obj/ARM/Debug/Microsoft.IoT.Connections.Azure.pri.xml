@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<PriInfo>
+	<ResourceMap name="Microsoft.IoT.Connections.Azure" version="1.0" primary="true">
+		<Qualifiers/>
+		<ResourceMapSubtree name="Files">
+			<ResourceMapSubtree name="Microsoft.IoT.Connections.Azure">
+				<ResourceMapSubtree name="Properties">
+					<NamedResource name="Azure.rd.xml" uri="ms-resource://Microsoft.IoT.Connections.Azure/Files/Microsoft.IoT.Connections.Azure/Properties/Azure.rd.xml">
+						<Candidate type="Path">
+							<Value>Microsoft.IoT.Connections.Azure\Properties\Azure.rd.xml</Value>
+						</Candidate>
+					</NamedResource>
+				</ResourceMapSubtree>
+			</ResourceMapSubtree>
+		</ResourceMapSubtree>
+	</ResourceMap>
+</PriInfo>

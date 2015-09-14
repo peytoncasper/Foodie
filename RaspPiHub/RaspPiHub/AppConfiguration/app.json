@@ -1,0 +1,4 @@
+﻿{
+  "StorageConnectionString": "StorageConnectionStringGoesHere",
+  "DefaultVerificationCode":  "1234"
+}
