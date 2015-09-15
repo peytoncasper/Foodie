@@ -23,6 +23,7 @@ using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Queue;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
+using Microsoft.IoT.Connections.Azure.EventHubs;
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
 namespace RaspPiHub
@@ -38,7 +39,10 @@ namespace RaspPiHub
         private CloudStorageAccount storageAccount;
         private CloudQueueClient queueClient;
         private CloudQueue queue;
-        ///
+        /// 
+        private ConnectionParameters connectionParams;
+        private HttpSender eventHubSender;
+
         private BluetoothManager.BluetoothManager BluetoothManager; 
 
         public string deviceName = "HC-06"; // Specify the device name to be selected; You can find the device name from the webb under bluetooth 
@@ -50,14 +54,18 @@ namespace RaspPiHub
             {
                 throw new NullReferenceException("Not able to load Application Configuration");
             }
-            
+            InitializeEventHubSettings();
+            //InitializeStorageAccountQueue(App.Current.ApplicationConfiguration.StorageConnectionString);
+
+
+
             BluetoothManager = new BluetoothManager.BluetoothManager();
             BluetoothManager.WeightReceived += UpdateWeight;
 
-            InitializeStorageAccountQueue(App.Current.ApplicationConfiguration.StorageConnectionString);
+
 
             DispatcherTimer timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromSeconds(2);
+            timer.Interval = TimeSpan.FromSeconds(7);
             timer.Tick += CheckWeight;
             timer.Start();
             //InitializeStorageAccountQueue(App.Current.ApplicationConfiguration.StorageConnectionString, "weightsesorqueue");
@@ -72,9 +80,28 @@ namespace RaspPiHub
                 await BluetoothManager.SendMessageAsync("C:Verify");
             }
         }
+        private void SendWeightToEventHub(string sensorData)
+        {
+            eventHubSender.Send("1234," + sensorData + "," + DateTime.Now.ToString("yyyy-MM-dd HH:mm"));
+        }
+        private void InitializeEventHubSettings()
+        {
+            connectionParams = new ConnectionParameters(
+                App.Current.ApplicationConfiguration.ServiceBusNamespace,
+                App.Current.ApplicationConfiguration.EventHubName,
+                App.Current.ApplicationConfiguration.PolicyName,
+                App.Current.ApplicationConfiguration.PolicyKey,
+                App.Current.ApplicationConfiguration.PublisherName,
+                App.Current.ApplicationConfiguration.TokenTimeToLive);
+            eventHubSender = new HttpSender(connectionParams);
+
+        }
+
+
+
         private void UpdateWeight(object sender, double weight)
         {
-            WriteToQueue(weight.ToString());
+            SendWeightToEventHub(weight.ToString());
             textBlock.Text = weight.ToString();
         }
         private async void InitializeStorageAccountQueue(string storageAccountString)

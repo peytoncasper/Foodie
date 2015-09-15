@@ -1,4 +1,10 @@
 ﻿{
-  "StorageConnectionString": "DefaultEndpointsProtocol=https;AccountName=portalvhdschkhv7hs3npqm;AccountKey=+5vsztzpotaTzq8+K/dmH1/BFyrWx34A6e5PdgthWB3pGSHA3Ezn27VI6EWIQD1QwcxafBYIFVi/yP5IuNrR0w==",
+  "StorageConnectionString": "StorageConnectionStringGoesHere",
+  "ServiceBusNamespace": "Foodie-ns",
+  "EventHubName": "foodie",
+  "PolicyName": "SendListen",
+  "PolicyKey": "GvGqqCyQ2rFT8musyzNSXIAD5ss/EOxL8mpHzRhLyes=",
+  "PublisherName": "Device1",
+  "ConnectedSensors": {},
   "DefaultVerificationCode":  "1234"
 }
