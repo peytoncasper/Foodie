@@ -5,6 +5,6 @@
   "PolicyName": "SendListen",
   "PolicyKey": "GvGqqCyQ2rFT8musyzNSXIAD5ss/EOxL8mpHzRhLyes=",
   "PublisherName": "Device1",
-  "ConnectedSensors": {},
+  "ConnectedSensors": {"bcfcc157-9111-4350-bff7-e02312629b6f": "HC-06"},
   "DefaultVerificationCode":  "1234"
 }

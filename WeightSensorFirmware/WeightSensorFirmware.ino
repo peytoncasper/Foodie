@@ -1,6 +1,6 @@
 #include <SoftwareSerial.h>
 SoftwareSerial bluetoothSerial(10,11);
-String passkey = "1234";
+
 double weightSensorData = 10.0;
 
 
@@ -31,16 +31,11 @@ void CheckForBluetoothData()
         receivedMessage.concat(bluetoothSerial.read());
       }
       Serial.println(receivedMessage);
-      if(command == 'V')
+
+      if(command == 'W')
       {
-        passkey = receivedMessage;
         payload = String(random(0,15));
         command = 'W';
-      }
-      else if(command == 'C')
-      {
-        payload = passkey;
-        command = 'V';
       }
       Serial.println(payload);
       if(payload.length() > 0)

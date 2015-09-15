@@ -8,8 +8,8 @@ namespace RaspPiHub
 {
     public class SensorReading
     {
-        public Guid SensorId { get; set; }
+        public Guid Sensor_Id { get; set; }
         public double Weight { get; set; }
-
+        public string Reading_Time { get; set; }
     }
 }
