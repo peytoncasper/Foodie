@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>Test</groupId>
-    <artifactId>Test</artifactId>
+    <groupId>WeightSensorSparkStreamingJob</groupId>
+    <artifactId>WeightSensorSparkStreamingJob</artifactId>
     <version>1.0-SNAPSHOT</version>
     <dependencies>
         <dependency>
@@ -44,20 +44,7 @@
             <artifactId>sqljdbc4</artifactId>
             <version>4.0</version>
         </dependency>
-        <!--<dependency>-->
-            <!--<groupId>org.apache.spark</groupId>-->
-            <!--<artifactId>spark-streaming-eventhubs_${scala.binary.version}</artifactId>-->
-            <!--<version>0.1.0</version>-->
-            <!--<scope>system</scope>-->
-            <!--<systemPath>/home/peyton/Desktop/hdinsight-spark-examples-master/sparkstreaming/lib/spark-streaming-eventhubs_2.10-0.1.0.jar</systemPath>-->
-        <!--</dependency>-->
+
     </dependencies>
-    <!--<repositories>-->
-        <!--&lt;!&ndash;other repositories if any&ndash;&gt;-->
-        <!--<repository>-->
-            <!--<id>Test.local</id>-->
-            <!--<name>Test</name>-->
-            <!--<url>file:${project.basedir}/repo</url>-->
-        <!--</repository>-->
-    <!--</repositories>-->
+
 </project>
