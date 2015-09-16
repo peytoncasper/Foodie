@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
-  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_5" inherit-compiler-output="false">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_6" inherit-compiler-output="false">
     <output url="file://$MODULE_DIR$/target/classes" />
     <output-test url="file://$MODULE_DIR$/target/test-classes" />
     <content url="file://$MODULE_DIR$">
@@ -35,7 +35,6 @@
     <orderEntry type="library" name="Maven: org.codehaus.jackson:jackson-core-asl:1.8.8" level="project" />
     <orderEntry type="library" name="Maven: org.codehaus.jackson:jackson-mapper-asl:1.8.8" level="project" />
     <orderEntry type="library" name="Maven: org.apache.avro:avro:1.7.4" level="project" />
-    <orderEntry type="library" name="Maven: com.google.protobuf:protobuf-java:2.5.0" level="project" />
     <orderEntry type="library" name="Maven: org.apache.hadoop:hadoop-auth:2.2.0" level="project" />
     <orderEntry type="library" name="Maven: org.apache.commons:commons-compress:1.4.1" level="project" />
     <orderEntry type="library" name="Maven: org.tukaani:xz:1.0" level="project" />
@@ -97,7 +96,6 @@
     <orderEntry type="library" name="Maven: org.slf4j:jul-to-slf4j:1.7.10" level="project" />
     <orderEntry type="library" name="Maven: org.slf4j:jcl-over-slf4j:1.7.10" level="project" />
     <orderEntry type="library" name="Maven: log4j:log4j:1.2.17" level="project" />
-    <orderEntry type="library" name="Maven: org.slf4j:slf4j-log4j12:1.7.10" level="project" />
     <orderEntry type="library" name="Maven: com.ning:compress-lzf:1.0.0" level="project" />
     <orderEntry type="library" name="Maven: org.xerial.snappy:snappy-java:1.1.1.6" level="project" />
     <orderEntry type="library" name="Maven: net.jpountz.lz4:lz4:1.2.0" level="project" />
@@ -105,10 +103,7 @@
     <orderEntry type="library" name="Maven: commons-net:commons-net:2.2" level="project" />
     <orderEntry type="library" name="Maven: org.spark-project.akka:akka-remote_2.10:2.3.4-spark" level="project" />
     <orderEntry type="library" name="Maven: org.spark-project.akka:akka-actor_2.10:2.3.4-spark" level="project" />
-    <orderEntry type="library" name="Maven: com.typesafe:config:1.2.1" level="project" />
-    <orderEntry type="library" name="Maven: io.netty:netty:3.8.0.Final" level="project" />
     <orderEntry type="library" name="Maven: org.spark-project.protobuf:protobuf-java:2.5.0-spark" level="project" />
-    <orderEntry type="library" name="Maven: org.uncommons.maths:uncommons-maths:1.2.2a" level="project" />
     <orderEntry type="library" name="Maven: org.spark-project.akka:akka-slf4j_2.10:2.3.4-spark" level="project" />
     <orderEntry type="library" name="Maven: org.scala-lang:scala-library:2.10.4" level="project" />
     <orderEntry type="library" name="Maven: org.json4s:json4s-jackson_2.10:3.2.10" level="project" />
@@ -137,7 +132,7 @@
     <orderEntry type="library" name="Maven: org.apache.qpid:qpid-amqp-1-0-client:0.32" level="project" />
     <orderEntry type="library" name="Maven: org.apache.qpid:qpid-amqp-1-0-client-jms:0.32" level="project" />
     <orderEntry type="library" name="Maven: org.apache.qpid:qpid-amqp-1-0-common:0.32" level="project" />
-    <orderEntry type="library" name="Maven: com.datastax.cassandra:cassandra-driver-core:2.1.7" level="project" />
+    <orderEntry type="library" name="Maven: com.datastax.cassandra:cassandra-driver-core:2.1.7.1" level="project" />
     <orderEntry type="library" name="Maven: io.netty:netty-handler:4.0.27.Final" level="project" />
     <orderEntry type="library" name="Maven: io.netty:netty-buffer:4.0.27.Final" level="project" />
     <orderEntry type="library" name="Maven: io.netty:netty-common:4.0.27.Final" level="project" />
@@ -156,5 +151,13 @@
     <orderEntry type="library" name="Maven: org.json4s:json4s-ast_2.10:3.3.0.RC5" level="project" />
     <orderEntry type="library" name="Maven: org.json4s:json4s-scalap_2.10:3.3.0.RC5" level="project" />
     <orderEntry type="library" name="Maven: com.microsoft.sqlserver:sqljdbc4:4.0" level="project" />
+    <orderEntry type="library" name="Maven: com.typesafe.akka:akka-slf4j_2.10:2.3.13" level="project" />
+    <orderEntry type="library" name="Maven: com.typesafe.akka:akka-remote_2.10:2.3.13" level="project" />
+    <orderEntry type="library" name="Maven: io.netty:netty:3.8.0.Final" level="project" />
+    <orderEntry type="library" name="Maven: com.google.protobuf:protobuf-java:2.5.0" level="project" />
+    <orderEntry type="library" name="Maven: org.uncommons.maths:uncommons-maths:1.2.2a" level="project" />
+    <orderEntry type="library" name="Maven: com.typesafe.akka:akka-actor_2.10:2.3.13" level="project" />
+    <orderEntry type="library" name="Maven: org.slf4j:slf4j-log4j12:1.7.12" level="project" />
+    <orderEntry type="library" name="Maven: com.typesafe:config:1.2.1" level="project" />
   </component>
 </module>
