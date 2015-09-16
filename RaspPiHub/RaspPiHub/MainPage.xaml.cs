@@ -23,6 +23,9 @@ using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Queue;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
+using Microsoft.IoT.Connections.Azure.EventHubs;
+using System.Threading;
+using Newtonsoft.Json;
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
 namespace RaspPiHub
@@ -38,10 +41,13 @@ namespace RaspPiHub
         private CloudStorageAccount storageAccount;
         private CloudQueueClient queueClient;
         private CloudQueue queue;
-        ///
+        /// 
+        private ConnectionParameters connectionParams;
+        private HttpSender eventHubSender;
+        private DispatcherTimer timer = new DispatcherTimer();
         private BluetoothManager.BluetoothManager BluetoothManager; 
 
-        public string deviceName = "HC-06"; // Specify the device name to be selected; You can find the device name from the webb under bluetooth 
+        //public string deviceName = "HC-06"; // Specify the device name to be selected; You can find the device name from the webb under bluetooth 
 
         public MainPage()
         {
@@ -50,60 +56,73 @@ namespace RaspPiHub
             {
                 throw new NullReferenceException("Not able to load Application Configuration");
             }
-            
+            InitializeEventHubSettings();
+
+
             BluetoothManager = new BluetoothManager.BluetoothManager();
             BluetoothManager.WeightReceived += UpdateWeight;
 
-            InitializeStorageAccountQueue(App.Current.ApplicationConfiguration.StorageConnectionString);
 
-            DispatcherTimer timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromSeconds(2);
+
+
+            timer.Interval = TimeSpan.FromSeconds(App.Current.ApplicationConfiguration.ConnectedSensors.Count * 5);
             timer.Tick += CheckWeight;
             timer.Start();
-            //InitializeStorageAccountQueue(App.Current.ApplicationConfiguration.StorageConnectionString, "weightsesorqueue");
-            //WriteToQueue("1234-12-12345678-12.1");
+    
         }
 
         private async void CheckWeight(object sender, object e)
         {
+            timer.Stop();
 
-            if (BluetoothManager.State == RaspPiHub.BluetoothManager.BluetoothManager.BluetoothConnectionState.Connected)
-            {
-                await BluetoothManager.SendMessageAsync("C:Verify");
-            }
-        }
-        private void UpdateWeight(object sender, double weight)
-        {
-            WriteToQueue(weight.ToString());
-            textBlock.Text = weight.ToString();
-        }
-        private async void InitializeStorageAccountQueue(string storageAccountString)
-        {
-            try
-            {
-                if (storageAccount == null)
-                    storageAccount = CloudStorageAccount.Parse(storageAccountString);
-                if (queueClient == null)
-                    queueClient = storageAccount.CreateCloudQueueClient();
-                if (queue == null)
-                    queue = queueClient.GetQueueReference("weightsensorqueue");
-                await queue.CreateIfNotExistsAsync();
-            }
-            catch(Exception ex)
+            foreach (var sensor in App.Current.ApplicationConfiguration.ConnectedSensors)
             {
 
+                await BluetoothManager.ConnectToDevice(sensor.Value, sensor.Key);
+                if (BluetoothManager.State == RaspPiHub.BluetoothManager.BluetoothManager.BluetoothConnectionState.Connected)
+                {
+                    
+                    await BluetoothManager.SendMessageAsync("W");
+                    await BluetoothManager.ListenForMessagesAsync();
+                }
+                BluetoothManager.Disconnect();
             }
+            timer.Start();
+            //if (BluetoothManager.State == RaspPiHub.BluetoothManager.BluetoothManager.BluetoothConnectionState.Connected)
+            //{
+            //    await BluetoothManager.SendMessageAsync("C:Verify");
+            //}
         }
-        private async void WriteToQueue(string sensorData)
+        private void SendWeightToEventHub(SensorReading sensorReading)
         {
-            CloudQueueMessage message = new CloudQueueMessage(sensorData);
-            queue.AddMessageAsync(message);
+            
+            eventHubSender.Send(JsonConvert.SerializeObject(sensorReading));
+        }
+        private void InitializeEventHubSettings()
+        {
+            connectionParams = new ConnectionParameters(
+                App.Current.ApplicationConfiguration.ServiceBusNamespace,
+                App.Current.ApplicationConfiguration.EventHubName,
+                App.Current.ApplicationConfiguration.PolicyName,
+                App.Current.ApplicationConfiguration.PolicyKey,
+                App.Current.ApplicationConfiguration.PublisherName,
+                App.Current.ApplicationConfiguration.TokenTimeToLive);
+            eventHubSender = new HttpSender(connectionParams);
+
+        }
+
+
+
+        private void UpdateWeight(object sender, SensorReading sensorReading)
+        {
+            SendWeightToEventHub(sensorReading);
+            textBlock.Text = sensorReading.Weight.ToString();
         }
 
         private async void button_Click(object sender, RoutedEventArgs e)
         {
 
-            await BluetoothManager.ConnectToDevice("HC-06");
+
             
         }
 

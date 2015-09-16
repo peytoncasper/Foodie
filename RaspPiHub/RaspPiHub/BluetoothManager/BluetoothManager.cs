@@ -2,22 +2,24 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Devices.Bluetooth.Rfcomm;
 using Windows.Devices.Enumeration;
 using Windows.Networking.Sockets;
 using Windows.Storage.Streams;
+using Windows.UI.Xaml;
 
 namespace RaspPiHub.BluetoothManager
 {
     public class BluetoothManager
     {
-        public delegate void AddOnMessageReceivedDelegate(object sender, double weight);
+        public delegate void AddOnMessageReceivedDelegate(object sender, SensorReading sensorReading);
         public event AddOnMessageReceivedDelegate WeightReceived;
-        private void OnWeightReceivedEvent(object sender, double weight)
+        private void OnWeightReceivedEvent(object sender, SensorReading sensorReading)
         {
             if (WeightReceived != null)
-                WeightReceived(sender, weight);
+                WeightReceived(sender, sensorReading);
         }
         public enum BluetoothConnectionState
         {
@@ -33,18 +35,16 @@ namespace RaspPiHub.BluetoothManager
         public Task BluetoothListener { get; set; }
         public DataWriter Writer { get; set; }
         public StreamSocket Socket { get; set; }
-
+        public Guid SensorId { get; set; }
         public BluetoothConnectionState State { get; set; }
 
-        public bool Verified { get; set; }
+        private DispatcherTimer timer = new DispatcherTimer();
 
-        private string VerificationCode { get; set; }
-        private string DefaultVerificationCode { get; set; }
-       
         public BluetoothManager()
         {
 
-            DefaultVerificationCode = App.Current.ApplicationConfiguration.DefaultVerificationCode;
+            timer.Tick += timer_tick;
+            timer.Interval = TimeSpan.FromSeconds(12);
         }
         public async Task ScanForDevices()
         {
@@ -57,9 +57,11 @@ namespace RaspPiHub.BluetoothManager
             }
         }
 
-        public async Task ConnectToDevice(string deviceName)
+        public async Task ConnectToDevice(string deviceName, Guid sensorId)
         {
-            if(DeviceCollection == null)
+
+
+            //if (DeviceCollection == null)
                 await ScanForDevices();
 
             foreach (var item in DeviceCollection)
@@ -73,6 +75,7 @@ namespace RaspPiHub.BluetoothManager
 
             if (SelectedDevice != null)
             {
+
                 BluetoothService = await RfcommDeviceService.FromIdAsync(SelectedDevice.Id);
 
                 if (BluetoothService != null)
@@ -83,13 +86,19 @@ namespace RaspPiHub.BluetoothManager
                             Disconnect();
 
                         Socket = new StreamSocket();
+
+                        timer.Start();
                         await Socket.ConnectAsync(BluetoothService.ConnectionHostName, BluetoothService.ConnectionServiceName);
+                        timer.Stop();
+                        if (Socket != null)
+                        {
+                            Writer = new DataWriter(Socket.OutputStream);
+                            Reader = new DataReader(Socket.InputStream);
 
-
-                        Writer = new DataWriter(Socket.OutputStream);
-                        Reader = new DataReader(Socket.InputStream);
-                        BluetoothListener = ListenForMessagesAsync();
-                        State = BluetoothConnectionState.Connected;
+                            State = BluetoothConnectionState.Connected;
+                            SensorId = sensorId;
+                        }
+                        
                     }
                     catch (Exception ex)
                     {
@@ -101,7 +110,7 @@ namespace RaspPiHub.BluetoothManager
         }
         public void Disconnect()
         {
-            
+            State = BluetoothConnectionState.Disconnected;
             if (Reader != null)
                 Reader = null;
             if (Writer != null)
@@ -116,10 +125,15 @@ namespace RaspPiHub.BluetoothManager
             }
             if (BluetoothService != null)
                 BluetoothService = null;
+            if(BluetoothListener != null)
+                BluetoothListener = null;
 
-            State = BluetoothConnectionState.Disconnected;
         }
-
+        private void timer_tick(object sender, object e)
+        {
+            timer.Stop();
+            Disconnect();
+        }
         public async Task<uint> SendMessageAsync(string message)
         {
             uint sentMessageSize = 0;
@@ -132,7 +146,7 @@ namespace RaspPiHub.BluetoothManager
             }
             return sentMessageSize;
         }
-        private async Task ListenForMessagesAsync()
+        public async Task ListenForMessagesAsync()
         {
             while (Reader != null)
             {
@@ -140,33 +154,50 @@ namespace RaspPiHub.BluetoothManager
                 {
 
                     //// Read first byte (length of the subsequent message, 255 or less). 
-                    uint sizeFieldCount = await Reader.LoadAsync(1);
+                    uint sizeFieldCount = 0;
+                    if (State == BluetoothConnectionState.Connected)
+                        sizeFieldCount = await Reader.LoadAsync(1);
+                    else
+                        return;
                     if (sizeFieldCount != 1)
                     {
                         // The underlying socket was closed before we were able to read the whole data. 
                         return;
                     }
 
-                    //// Read the message. 
-                    uint messageLength = uint.Parse(((char)Reader.ReadByte()).ToString());
-                    uint actualMessageLength = await Reader.LoadAsync(messageLength);
+                    //// Read the message.
+                    uint messageLength = 0;
+                    if (State == BluetoothConnectionState.Connected)
+                        messageLength = uint.Parse(((char)Reader.ReadByte()).ToString());
+                    else
+                        return;
+
+                    uint actualMessageLength = 0;
+                    if (State == BluetoothConnectionState.Connected)
+                        actualMessageLength = await Reader.LoadAsync(messageLength);
+                    else
+                        return;
                     if (messageLength != actualMessageLength)
                     {
                         // The underlying socket was closed before we were able to read the whole data. 
                         return;
                     }
                     // Read the message and process it.
-                    string message = Reader.ReadString(actualMessageLength);
+                    string message = "";
+                    if (State == BluetoothConnectionState.Connected)
+                        message = Reader.ReadString(actualMessageLength);
+                    else
+                        return;
+
                     string payload = message.Split(':')[1];
                     if(message.Count() > 1)
                         switch(message[0])
                         {
-                            case 'V':
-                                Verify(payload);
-                                break;
+
                             case 'W':
-                                OnWeightReceivedEvent(this, double.Parse(payload));
-                                break;
+                                OnWeightReceivedEvent(this, new SensorReading() { Reading_Time = DateTime.Now.ToString("yyyy-MM-dd HH:mm"), Sensor_Id = SensorId, Weight = double.Parse(payload) });
+                                return;
+
                         }
 
                 }
@@ -176,19 +207,7 @@ namespace RaspPiHub.BluetoothManager
                 }
             }
         }
-        private void Verify(string message)
-        {
-            if (message == VerificationCode || message == DefaultVerificationCode)
-            {
-                Verified = true;
-                SendMessageAsync("V:" + Guid.NewGuid().ToString());
-            }
-            else
-            {
-                Disconnect();
-                Verified = false;
-            }
-        }
+
 
     }
 }
