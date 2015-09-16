@@ -8,20 +8,20 @@ import org.apache.spark.streaming.eventhubs.EventHubsUtils
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.json4s._
 import org.json4s.native.JsonMethods._
-
-case class weight_reading(sensor_id: String, weight: String, reading_time: String)
+import com.microsoft.sqlserver.jdbc._
+case class weight_reading(Sensor_Id: String, Weight: String, Reading_Time: String)
 object WeightSensorSparkStreamingJob {
 
 
 	implicit val formats = DefaultFormats
 	def main(args: Array[String]) {
-
-//		if (args.length < 7) {
-//			System.err.println("Usage: EventCount <policyname> <policykey>"
-//				+ "<namespace> <name> <partitionCount> <cassandra IP> <sqlConnectionString>")
-//			System.err.println(args.length)
-//			System.exit(1)
-//		}
+		Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+		if (args.length < 7) {
+			System.err.println("Usage: EventCount <policyname> <policykey>"
+				+ "<namespace> <name> <partitionCount> <cassandra IP> <sqlConnectionString>")
+			System.err.println(args.length)
+			System.exit(1)
+		}
 		val Array(policy, key, namespace, name,partitionCount, cassandraIp, sqlConnectionString) = args
 		val ehParams = Map[String, String](
 			"eventhubs.policyname" -> policy,
@@ -54,7 +54,7 @@ object WeightSensorSparkStreamingJob {
 					if(record != null) {
 						val weight_readings = parse(new String(record)).extract[weight_reading]
 
-						val insertWeightReading = sqlString + "('" + weight_readings.sensor_id + "'," + weight_readings.weight + ",'" + weight_readings.reading_time + "')"
+						val insertWeightReading = sqlString + "('" + weight_readings.Sensor_Id + "'," + weight_readings.Weight + ",'" + weight_readings.Reading_Time + "')"
 
 						statement.executeUpdate(insertWeightReading)
 					}
@@ -65,6 +65,6 @@ object WeightSensorSparkStreamingJob {
 
 		ssc.start()
 		ssc.awaitTermination()
-
+1
 	}
 }
