@@ -67,6 +67,13 @@ cd sqljdbc_4.2
 mvn install:install-file -Dfile=sqljdbc4.jar -DgroupId=com.microsoft.sqlserver -DartifactId=sqljdbc4 -Dversion=4.0 -Dpackaging=jar
 
 // Set Up your Azure SQL DB 
+// Add the following table to your Azure SQL DB
+CREATE TABLE [dbo].[weight_readings] (
+    [id]           INT           IDENTITY (1, 1) NOT NULL,
+    [sensor_id]    NVARCHAR (36) NOT NULL,
+    [weight]       FLOAT (53)    NOT NULL,
+    [reading_time] DATETIME      NOT NULL
+);
 
 // Navigate to Foodie/WeightSensorSparkStreamingJob
 // This will generate the jar file for the spark job that expects 7 Arguments, space delmited in the following order
