@@ -16,7 +16,6 @@ UPLOAD_FOLDER = 'barcode/'
 ALLOWED_EXTENSIONS = set(['jpg', 'png'])
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-api_key = "55fabc0e4cf9ce4a56827e5b4e3b22e2"
 
 @web.route('/')
 def index():
@@ -76,7 +75,7 @@ def scanBarcodeImage(fileLocation):
     # scan the image for barcodes
     scanner.scan(image)
 
-
+    api_key = app.config['55fabc0e4cf9ce4a56827e5b4e3b22e2']
 
     # extract results
     for symbol in image:
@@ -133,12 +132,9 @@ def upload():
             path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
             file.save(path)
             barcode = json.loads(scanBarcodeImage(path).text);
-            barcodeName = barcode["name"]
-            if barcodeName is "null":
-                barcodeName = "No Product Info Available"
-            cassandra_helper.session.execute(updateSensor.bind({"sensor_id":uuid.UUID(sensor_id), "barcode": barcode["gtin"], "product_name": barcodeName}))
+            cassandra_helper.session.execute(updateSensor.bind({"sensor_id":uuid.UUID(sensor_id), "barcode": barcode["gtin"], "product_name": barcode["name"] if not "null" else "No Product Info Available"}))
 
-            return jsonify(results=[barcodeName, barcode["gtin"]])
+            return jsonify(results=[barcode["name"], barcode["gtin"]])
 
     return getSensor["barcode"]
 

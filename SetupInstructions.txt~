@@ -71,8 +71,7 @@ mvn install:install-file -Dfile=sqljdbc4.jar -DgroupId=com.microsoft.sqlserver -
 // Connection String of Azure SQL DB - You will want the jdbc connection string from Azure
 mvn dependency:copy-dependencies
 mvn package
-mvn exec:java -Dexec.args="EHPolicyName EHPolicyKey EHNamespace EHName EHPartitionCount CassandraIP JDBCConnectionString"
-
+nohup mvn exec:java -Dexec.args="EHPolicyName EHPolicyKey EHNamespace EHName EHPartitionCount CassandraIP JDBCConnectionString" &
 
 
 
