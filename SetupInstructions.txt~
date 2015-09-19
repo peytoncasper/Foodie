@@ -1,0 +1,85 @@
+// Installs Git
+sudo apt-get install git
+git clone https://github.com/vadlak/Foodie.git
+
+// Installs Maven
+apt-get install maven
+
+// Installs Oracle Java 7
+sudo apt-get install python-software-properties
+sudo add-apt-repository ppa:webupd8team/java
+sudo apt-get update
+apt-get install oracle-java7-installer
+
+//Setting up DataStax Enterprise, be sure to sign up for an account here www.datastax.com and enter your user and pass below. 
+echo "deb http://PLACE YOU USERNAME HERE:PLACE YOUR PASSWORD HERE@debian.datastax.com/enterprise stable main" | sudo tee -a /etc/apt/sources.list.d/datastax.sources.list
+curl -L https://debian.datastax.com/debian/repo_key | sudo apt-key add -
+sudo apt-get install dse-full=4.7.3-1
+
+// Configuring Cassandra
+Edit /etc/dse/cassandra/cassandra.yaml
+	Line 280 - Change it to " - seeds: "PRIVATE IP ADDRESS OF YOUR VM"" (Minus the outer qoutes)
+	Line 393 - Change it to "listen_address: PRIVATE IP ADDRESS OF YOUR VM" (Minus the outer qoutes)
+	Line 451 - Change it to "rpc_address: PRIVATE IP ADDRESS OF YOUR VM" (Minus the outer qoutes)
+Edit /etc/default/dse
+	Line 24 - Change it to SPARK_ENABLED=1
+
+service dse restart
+
+// Installing Python Packages and Libraries
+apt-get install python-dev
+apt-get install pip
+apt-get install python-zbar
+pip install flask
+pip install cassandra-driver
+
+// Setup Flask Project
+Edit /Foodie/FoodieWeb/application.cfg
+	Line 1 - Ensure that DSE Cluster is set to your VM's private IP Address
+Edit /Foodie/FoodieWeb/routes/web.py
+	Line 19 - Set the api_key variable equal to your Outpan API Key
+
+// Installing Scala 2.10.0 to support Event Hubs Library
+wget http://www.scala-lang.org/files/archive/scala-2.10.0.tgz
+tar zxf scala-2.10.0.tgz
+sudo mv scala-2.10.0 /usr/share/scala
+
+// Replacing Scala links
+sudo ln -s /usr/share/scala/scala-2.10.0/bin/scala /usr/bin/scala
+sudo ln -s /usr/share/scala/scala-2.10.0/bin/scalac /usr/bin/scalac
+sudo ln -s /usr/share/scala/scala-2.10.0/bin/fsc /usr/bin/fsc
+sudo ln -s /usr/share/scala/scala-2.10.0/bin/sbaz /usr/bin/sbaz
+sudo ln -s /usr/share/scala/scala-2.10.0/bin/sbaz-setup /usr/bin/sbaz-setup
+sudo ln -s /usr/share/scala/scala-2.10.0/bin/scaladoc /usr/bin/scaladoc
+sudo ln -s /usr/share/scala/scala-2.10.0/bin/scalap /usr/bin/scalap
+
+// Navigate to the root of the project and then run the following commands.
+// These will untar the event hub library and install it to the maven repository
+tar zxf spark-eventhubs-master.tar.gz
+cd spark-eventhubs-master
+mvn dependency:copy-dependencies
+mvn clean install
+
+// Navigate to the root of the project
+// This will untar Microsoft's SQL Library and install it to the maven repository
+tar zxf sqljdbc_4.2.tar.gz
+cd sqljdbc_4.2
+mvn install:install-file -Dfile=sqljdbc4.jar -DgroupId=com.microsoft.sqlserver -DartifactId=sqljdbc4 -Dversion=4.0 -Dpackaging=jar
+
+// Navigate to Foodie/WeightSensorSparkStreamingJob
+// This will generate the jar file for the spark job that expects 7 Arguments, space delmited in the following order
+// Event Hub Policy Name - In the Event Hub tutorial you were asked to create 2 Shared Access Policies, if you followed it exactly it should be "ReceiveRule"
+// Event Hub Policy Key - This is the Shared Access Policy key that can be found by clicking on "Connection Information"
+// Event Hub Namespace - This is usually the name of your eventhub followed by "-ns"
+// Event Hub Name - This is the name of your event hub
+// Number of Event Hub Partitions - When you created your event hub you specified a certain number of paritions. Most likely 8
+// IP Address of Cassandra - In this case we set it to the Private IP Address of our VM
+// Connection String of Azure SQL DB - You will want the jdbc connection string from Azure
+mvn dependency:copy-dependencies
+mvn package
+nohup mvn exec:java -Dexec.args="EHPolicyName EHPolicyKey EHNamespace EHName EHPartitionCount CassandraIP JDBCConnectionString" &
+
+
+
+
+

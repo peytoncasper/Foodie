@@ -1,0 +1,10 @@
+﻿{
+
+  "ServiceBusNamespace": "Service Bus Namespace",
+  "EventHubName": "Event Hub Name",
+  "PolicyName": "Send Policy Name",
+  "PolicyKey": "Send Policy Key",
+  "PublisherName": "Arbitrary Name",
+  "ConnectedSensors": {},
+  "DefaultVerificationCode":  "1234"
+}

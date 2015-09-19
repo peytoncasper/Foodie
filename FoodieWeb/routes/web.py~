@@ -1,0 +1,140 @@
+from sys import argv
+
+import zbar
+import Image
+import requests
+import json
+import uuid
+from flask import Flask, Blueprint, render_template, request, session, jsonify
+import cassandra_helper
+import os
+
+web = Blueprint('web', __name__)
+app = Flask(__name__)
+
+UPLOAD_FOLDER = 'barcode/'
+ALLOWED_EXTENSIONS = set(['jpg', 'png'])
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+
+@web.route('/')
+def index():
+    getSensor = cassandra_helper.session.prepare('''
+        SELECT * FROM foodie.sensors WHERE sensor_id = ?
+        ''')
+    return render_template('index.jinja2')
+
+
+@web.route('/line_graph_sensor')
+def line_graph_sensor():
+    sensor_id = request.args.get('sensor_id')
+    final_data = [["Time", "Weight"]]
+    # sensor_name = request.args.get('sensor_name')
+    if not cassandra_helper.session is None and sensor_id is not None:
+        last_30_ticks = cassandra_helper.session.prepare('''
+        SELECT * FROM foodie.weight_readings
+        WHERE sensor_id = ? LIMIT 30
+        ''')
+        sensor_data = cassandra_helper.session.execute(last_30_ticks.bind({'sensor_id': uuid.UUID(sensor_id)}))
+
+        for reading in sensor_data:
+            final_data.append([reading["reading_time"], reading["weight"]])
+    if len(final_data) > 1:
+        return jsonify(results=final_data)
+    else:
+        return []
+
+
+@web.route('/get_sensors')
+def get_sensors():
+    sensor_data = []
+    if not cassandra_helper.session is None:
+        sensors = cassandra_helper.session.prepare('''
+        SELECT * FROM foodie.sensors
+        ''')
+        sensor_data = cassandra_helper.session.execute(sensors)
+    return jsonify(results=sensor_data)
+
+
+def scanBarcodeImage(fileLocation):
+    # create a reader
+    scanner = zbar.ImageScanner()
+
+    # configure the reader
+    scanner.parse_config('enable')
+
+    # obtain image data
+    pil = Image.open(fileLocation).convert('L')
+
+    width, height = pil.size
+    raw = pil.tostring()
+
+    # wrap image data
+    image = zbar.Image(width, height, 'Y800', raw)
+
+    # scan the image for barcodes
+    scanner.scan(image)
+
+    api_key = app.config['55fabc0e4cf9ce4a56827e5b4e3b22e2']
+
+    # extract results
+    for symbol in image:
+        # do something useful with results
+        if symbol.data != "" and str(symbol.type) == "UPC" or str(symbol.type) == "UPCA":
+            r = requests.get("https://api.outpan.com/v1/products/" + symbol.data, auth=(api_key, ""))
+            return r
+
+
+    # clean up
+    del (image)
+
+
+
+@web.route('/insert_sensor')
+def insert_sensor():
+    sensor_id = request.args.get('sensor_id')
+    sensor_name = request.args.get('sensor_name')
+    if not sensor_id is None and not sensor_name is None and not cassandra_helper.session is None:
+        values = {
+            'sensor_id': uuid.UUID(sensor_id),
+            'sensor_name': sensor_name
+        }
+
+        insert_sensor = cassandra_helper.session.prepare('''
+        INSERT INTO foodie.sensors
+            (sensor_id, sensor_name)
+        VALUES
+            (?, ?)
+        ''')
+        cassandra_helper.session.execute(insert_sensor.bind(values))
+        return "success";
+    return "fail";
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+
+
+@web.route('/upload', methods=['GET', 'POST'])
+def upload():
+    sensor_id = request.args.get('sensor_id')
+    getSensor = cassandra_helper.session.prepare('''
+        SELECT * FROM foodie.sensors WHERE sensor_id = ?
+        ''')
+    updateSensor = cassandra_helper.session.prepare('''
+        UPDATE foodie.sensors SET barcode = ?, product_name=? WHERE sensor_id = ?
+        ''')
+    cassandra_helper.session.execute(getSensor.bind({"sensor_id":uuid.UUID(sensor_id)}))
+
+    if request.method == 'POST':
+        file = request.files['file']
+        if file and allowed_file(file.filename):
+            path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+            file.save(path)
+            barcode = json.loads(scanBarcodeImage(path).text);
+            cassandra_helper.session.execute(updateSensor.bind({"sensor_id":uuid.UUID(sensor_id), "barcode": barcode["gtin"], "product_name": barcode["name"] if not "null" else "No Product Info Available"}))
+
+            return jsonify(results=[barcode["name"], barcode["gtin"]])
+
+    return getSensor["barcode"]
+

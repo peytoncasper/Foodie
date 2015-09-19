@@ -1,0 +1,181 @@
+<html>
+<head>
+    <script type="text/javascript"
+            src="https://www.google.com/jsapi?autoload={
+            'modules':[{
+              'name':'visualization',
+              'version':'1',
+              'packages':['corechart']
+            }]
+}"></script>
+    <script src="/static/js/jquery.js"></script>
+    <link href="/static/css/bootstrap.css" rel="stylesheet">
+    <script src="/static/js/bootstrap-transition.js"></script>
+    <script src="/static/js/bootstrap-alert.js"></script>
+    <script src="/static/js/bootstrap-modal.js"></script>
+    <script src="/static/js/bootstrap-dropdown.js"></script>
+    <script src="/static/js/bootstrap-scrollspy.js"></script>
+    <script src="/static/js/bootstrap-tab.js"></script>
+    <script src="/static/js/bootstrap-tooltip.js"></script>
+    <script src="/static/js/bootstrap-popover.js"></script>
+    <script src="/static/js/bootstrap-button.js"></script>
+    <script src="/static/js/bootstrap-collapse.js"></script>
+    <script src="/static/js/bootstrap-carousel.js"></script>
+    <script src="/static/js/bootstrap-typeahead.js"></script>
+</head>
+
+<body>
+<nav style="background-color:#333333; border-radius:0px; border:0px;margin-bottom:0px" class="navbar navbar-default">
+    <div class="container-fluid">
+        <div style="color: #ffffff;"><h3 style="margin-top:15px;">Foodie</h3></div>
+        {#      <div id="hamburger" class="pull-left" style="margin-left:4px;">#}
+        {#        <a>#}
+        {#          <span style="color:#ffffff;" class="navbar-brand glyphicon glyphicon-menu-hamburger"/>#}
+        {#        </a>#}
+        {#      </div>#}
+    </div>
+</nav>
+<div>
+
+    <div id="sensor_chart" class="col-md-6" style="height: 500px"></div>
+    <div class="col-md-1">
+        <div class="dropdown" >
+            <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" style="width:100%" data-toggle="dropdown"
+                    aria-haspopup="true" aria-expanded="true">
+                <span id="sensorName">Sensors</span>
+                <span class="caret"></span>
+            </button>
+            <ul id="sensorDropdown" class="dropdown-menu" aria-labelledby="dropdownMenu1">
+
+            </ul>
+
+        </div>
+            <h4 id="name"></h4>
+            <h4 id="barcode"></h4>
+        <label id="uploadLabel" for="file-upload" style="width:100%">
+            <button id="uploadButton" class="btn btn-sm btn-primary" style="width:100%">Upload Barcode</button>
+        </label>
+        <input style="display:none" id="file-upload" type="file"/>
+    </div>
+</div>
+
+
+</body>
+
+<script type="text/javascript">
+    google.setOnLoadCallback(drawChart);
+    var sensor_chart = new google.visualization.LineChart(document.getElementById('sensor_chart'));
+    var activeSensor = "";
+
+    $("#uploadButton").on("click", function (e) {
+        $("#uploadLabel").click();
+    });
+    $("#file-upload").change(function(e){
+        e.preventDefault();
+        var files = $("#file-upload")[0].files;
+
+        if (files.length > 0) {
+            var file = files[0];
+            var formData = new FormData();
+            formData.append('file', file, file.name);
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/upload?sensor_id=' + activeSensor, true);
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    // File(s) uploaded.
+                    var json = JSON.parse(xhr.responseText);
+                    console.log(json.results[1])
+                    if(json.results[0] == null)
+                        $("#name").text("No Product Info Available")
+                    else
+                        $("#name").text(json.results[0])
+                    $("#barcode").text(json.results[1]);
+                } else {
+                    alert('An error occurred!');
+                }
+            };
+        }
+
+            xhr.send(formData);
+    });
+
+
+    loadSensors()
+    function loadSensors() {
+        var jsonData = "";
+        $.ajax({
+            url: "/get_sensors",
+            data: {},
+            async: false,
+            success: function (data) {
+                jsonData = data.results;
+            }
+        });
+        {#          var obj = jQuery.parseJSON( jsonData );#}
+
+        for (var i = 0; i < jsonData.length; i++) {
+            if (i == 0)
+                activeSensor = jsonData[i].sensor_id;
+            $("#name").text(jsonData[i].product_name);
+            $("#barcode").text(jsonData[i].barcode);
+            $("#sensorName").text(jsonData[i].sensor_name);
+            $("#sensorDropdown").append("<li><a  class='dropdownEntry' data-id=" + jsonData[i].sensor_id + ">" + jsonData[i].sensor_name + "</a></li>");
+        }
+
+    }
+    $(".dropdownEntry").on("click", function () {
+        activeSensor = $(this).data("id");
+        $("#sensorName").text($(this).text());
+    });
+
+    function drawChart() {
+        var jsonData = "";
+        $.ajax({
+            url: "/line_graph_sensor",
+            data: {
+                sensor_id: activeSensor
+            },
+            async: false,
+            success: function (data) {
+                jsonData = data.results;
+            }
+        });
+        var data = google.visualization.arrayToDataTable(jsonData);
+
+        var options = {
+            title: 'Sensor Data',
+            curveType: 'function',
+            legend: {position: 'bottom'},
+            chartArea: {left: '0%', top: '0%', bottom: '0%', right: '0%', width: "90%"},
+        };
+
+
+        sensor_chart.draw(data, options);
+    }
+    function reloadLineChart() {
+        var jsonData = "";
+        $.ajax({
+            url: "/line_graph_sensor",
+            data: {
+                sensor_id: activeSensor
+            },
+            async: false,
+            success: function (data) {
+                jsonData = data.results;
+            }
+        });
+        var data = google.visualization.arrayToDataTable(jsonData);
+
+
+        var options = {
+            title: 'Sensor Data',
+            curveType: 'function',
+            legend: {position: 'bottom'},
+            chartArea: {left: '0%', top: '0%', bottom: '0%', right: '0%', width: "90%"},
+        };
+        sensor_chart.draw(data, options);
+    }
+    setInterval(reloadLineChart, 5000);
+</script>
+</html>
