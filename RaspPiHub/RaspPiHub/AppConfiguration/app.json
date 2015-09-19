@@ -1,6 +1,5 @@
 ﻿{
 
-<<<<<<< HEAD
   "ServiceBusNamespace": "Enter Namespace",
   "EventHubName": "Enter EH Name",
   "PolicyName": "EH Policy",
