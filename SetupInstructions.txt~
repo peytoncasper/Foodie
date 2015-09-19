@@ -33,6 +33,12 @@ apt-get install python-zbar
 pip install flask
 pip install cassandra-driver
 
+// Setup Flask Project
+Edit /Foodie/FoodieWeb/application.cfg
+	Line 1 - Ensure that DSE Cluster is set to your VM's private IP Address
+Edit /Foodie/FoodieWeb/routes/web.py
+	Line 19 - Set the api_key variable equal to your Outpan API Key
+
 // Installing Scala 2.10.0 to support Event Hubs Library
 wget http://www.scala-lang.org/files/archive/scala-2.10.0.tgz
 tar zxf scala-2.10.0.tgz
