@@ -25,7 +25,10 @@ using Microsoft.WindowsAzure.Storage.Queue;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
 using Microsoft.IoT.Connections.Azure.EventHubs;
 using System.Threading;
+using System.Windows;
 using Newtonsoft.Json;
+using Windows.UI.Popups;
+using System.Net;
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
 namespace RaspPiHub
@@ -62,10 +65,10 @@ namespace RaspPiHub
             BluetoothManager = new BluetoothManager.BluetoothManager();
             BluetoothManager.WeightReceived += UpdateWeight;
 
+            UpdateDevicesList();
 
 
-
-            timer.Interval = TimeSpan.FromSeconds(App.Current.ApplicationConfiguration.ConnectedSensors.Count * 5);
+            timer.Interval = TimeSpan.FromSeconds(10);
             timer.Tick += CheckWeight;
             timer.Start();
     
@@ -78,20 +81,18 @@ namespace RaspPiHub
             foreach (var sensor in App.Current.ApplicationConfiguration.ConnectedSensors)
             {
 
-                await BluetoothManager.ConnectToDevice(sensor.Value, sensor.Key);
+                //if(BluetoothManager.State == RaspPiHub.BluetoothManager.BluetoothManager.BluetoothConnectionState.Disconnected)
+                await BluetoothManager.ConnectToDevice(sensor.BluetoothId, sensor.SensorId);
                 if (BluetoothManager.State == RaspPiHub.BluetoothManager.BluetoothManager.BluetoothConnectionState.Connected)
                 {
                     
                     await BluetoothManager.SendMessageAsync("W");
                     await BluetoothManager.ListenForMessagesAsync();
                 }
-                BluetoothManager.Disconnect();
+                //BluetoothManager.Disconnect();
             }
             timer.Start();
-            //if (BluetoothManager.State == RaspPiHub.BluetoothManager.BluetoothManager.BluetoothConnectionState.Connected)
-            //{
-            //    await BluetoothManager.SendMessageAsync("C:Verify");
-            //}
+
         }
         private void SendWeightToEventHub(SensorReading sensorReading)
         {
@@ -111,29 +112,125 @@ namespace RaspPiHub
 
         }
 
-
-
+        
         private void UpdateWeight(object sender, SensorReading sensorReading)
         {
             SendWeightToEventHub(sensorReading);
-            textBlock.Text = sensorReading.Weight.ToString();
-        }
-
-        private async void button_Click(object sender, RoutedEventArgs e)
-        {
-
-
-            
-        }
-
-        private async void verify_Click(object sender, RoutedEventArgs e)
-        {
 
         }
 
-        private void disconnect_Click(object sender, RoutedEventArgs e)
+        private void Refresh_Click(object sender, RoutedEventArgs e)
         {
-            BluetoothManager.Disconnect();
+            UpdateDevicesList();
+        }
+        private async void UpdateDevicesList()
+        {
+            Devices_List.Items.Clear();
+
+            await BluetoothManager.ScanForDevices();
+            foreach (var item in BluetoothManager.DeviceCollection)
+            {
+                var itemValue = "";
+                foreach (var savedSensor in App.Current.ApplicationConfiguration.ConnectedSensors)
+                    if (savedSensor.BluetoothId == item.Id)
+                        itemValue = "(Added) ";
+                itemValue += item.Name + "     " + item.Id;
+                Devices_List.Items.Add(itemValue);
+            }
+        }
+
+        private void AddDevice_Click(object sender, RoutedEventArgs e)
+        {
+            AddSensor();
+        }
+        private async void AddSensor()
+        {
+            timer.Stop();
+            if (Devices_List.SelectedItem != null)
+            {
+                var data = Devices_List.SelectedItem.ToString().Split(' ');
+                var sensorId = data.LastOrDefault();
+                var sensorName = data[1];
+                if (sensorId != null)
+                {
+                    foreach (var sensor in App.Current.ApplicationConfiguration.ConnectedSensors)
+                    {
+                        if (sensor.BluetoothId == sensorId)
+                        {
+
+                            UpdateErrorMessage("This sensor is already being tracked.");
+
+                            timer.Start();
+                            return;
+                        }
+                    }
+                    var newSensor = new SensorProfile()
+                    {
+                        SensorId = Guid.NewGuid(),
+                        BluetoothId = sensorId,
+                        BluetoothName = sensorName
+                    };
+                    App.Current.ApplicationConfiguration.ConnectedSensors.Add(newSensor);
+                    var request = (HttpWebRequest)WebRequest.Create("http://" + App.Current.ApplicationConfiguration.AzureVMIp + "/insert_sensor?sensor_id=" + newSensor.SensorId + "&sensor_name=NewlyAddedSensor");
+                    await request.GetResponseAsync();
+                    var writeSuccess = await App.Current.SaveApplicationConfiguration();
+
+                    if (!writeSuccess)
+                        UpdateErrorMessage("Configuration write failed.");
+                    else
+                        UpdateDevicesList();
+                }
+
+            }
+            UpdateErrorMessage("Select a sensor from the list.");
+            timer.Start();
+
+        }
+        private async void RemoveSensor()
+        {
+            timer.Stop();
+            if (Devices_List.SelectedItem != null)
+            {
+                var data = Devices_List.SelectedItem.ToString().Split(' ');
+                var sensorId = data.LastOrDefault();
+                var sensorName = data[1];
+                if (sensorId != null)
+                {
+                    for(int i = 0; i < App.Current.ApplicationConfiguration.ConnectedSensors.Count; i++)
+                    {
+                        var sensor = App.Current.ApplicationConfiguration.ConnectedSensors.ElementAt(i);
+                        if (sensor.BluetoothId == sensorId)
+                        {
+                            App.Current.ApplicationConfiguration.ConnectedSensors.Remove(sensor);
+                            var writeSuccess = await App.Current.SaveApplicationConfiguration();
+
+                            if (!writeSuccess)
+                                UpdateErrorMessage("Configuration write failed.");
+                            else
+                                UpdateDevicesList();
+                        }
+                    }
+
+                    UpdateErrorMessage("This sensor is not being tracked");
+                    timer.Start();
+                    return;
+
+                }
+
+            }
+            UpdateErrorMessage("Select a sensor from the list.");
+            timer.Start();
+        }
+        private void UpdateErrorMessage(string message)
+        {
+            ErrorMessage.Text = "This sensor is already being tracked.";
+            if (ErrorMessage.Visibility == Visibility.Collapsed)
+                ErrorMessage.Visibility = Visibility.Visible;
+        }
+
+        private void RemoveDevice_Click(object sender, RoutedEventArgs e)
+        {
+            RemoveSensor();
         }
     }
 }

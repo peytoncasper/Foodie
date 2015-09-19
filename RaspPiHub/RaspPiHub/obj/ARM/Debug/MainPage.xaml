@@ -7,11 +7,14 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <Button x:ConnectionId='1' x:Name="button" Content="Connect to HC-06" HorizontalAlignment="Left" Margin="91,95,0,0" VerticalAlignment="Top" Width="190"                     />
-        <Button x:ConnectionId='2' x:Name="verify" Content="Send Verification Request" HorizontalAlignment="Left" Margin="91,132,0,0" VerticalAlignment="Top" Width="190"                     />
-        <Button x:ConnectionId='3' x:Name="disconnect" Content="Disconnect" HorizontalAlignment="Left" Margin="91,206,0,0" VerticalAlignment="Top" Width="190"                         />
-        <TextBlock x:ConnectionId='4' x:Name="textBlock" HorizontalAlignment="Left" Margin="91,374,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top"/>
+    <Grid Background="#FF191919">
+        <Button x:ConnectionId='1' x:Name="Refresh" Content="Refresh" HorizontalAlignment="Left" Margin="319,399,0,0" VerticalAlignment="Top" RequestedTheme="Dark"                      />
+        <ListView x:ConnectionId='2' x:Name="Devices_List" HorizontalAlignment="Left" Height="198" Margin="319,196,0,0" VerticalAlignment="Top" Width="387" RequestedTheme="Dark" BorderBrush="#FFB0B0B0" BorderThickness="2" >
+
+        </ListView>
+        <Button x:ConnectionId='3' x:Name="AddDevice" Content="Add Device" HorizontalAlignment="Left" Margin="610,399,0,0" VerticalAlignment="Top" RequestedTheme="Dark"                        />
+        <Button x:ConnectionId='4' x:Name="RemoveDevice" Content="Remove Device" HorizontalAlignment="Left" Margin="442,399,0,0" VerticalAlignment="Top" RequestedTheme="Dark"                           />
+        <TextBlock x:ConnectionId='5' x:Name="ErrorMessage" HorizontalAlignment="Left" Margin="319,171,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Visibility="Collapsed"/>
     </Grid>
 </Page>
 

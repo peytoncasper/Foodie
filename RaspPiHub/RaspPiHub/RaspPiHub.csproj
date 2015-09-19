@@ -108,6 +108,7 @@
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SensorProfile.cs" />
     <Compile Include="SensorReading.cs" />
   </ItemGroup>
   <ItemGroup>

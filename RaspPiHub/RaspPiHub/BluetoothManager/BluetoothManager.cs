@@ -57,7 +57,7 @@ namespace RaspPiHub.BluetoothManager
             }
         }
 
-        public async Task ConnectToDevice(string deviceName, Guid sensorId)
+        public async Task ConnectToDevice(string deviceId, Guid sensorId)
         {
 
 
@@ -66,7 +66,7 @@ namespace RaspPiHub.BluetoothManager
 
             foreach (var item in DeviceCollection)
             {
-                if (item.Name == deviceName)
+                if (item.Id == deviceId)
                 {
                     SelectedDevice = item;
                     break;

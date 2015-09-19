@@ -31,11 +31,8 @@
   <Capabilities>
     <Capability Name="internetClient" />
     <Capability Name="internetClientServer" />
-    <DeviceCapability Name="bluetooth.rfcomm">
-      <Device Id="any">
-        <Function Type="name:serialPort" />
-      </Device>
-    </DeviceCapability>
+    <uap:Capability Name="removableStorage" />
+    <DeviceCapability Name="bluetooth.rfcomm" />
   </Capabilities>
   <Extensions>
     <Extension Category="windows.activatableClass.inProcessServer">

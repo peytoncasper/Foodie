@@ -16,6 +16,8 @@ using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using Newtonsoft.Json;
 using RaspPiHub.AppConfiguration;
+using Windows.Storage;
+using System.Threading.Tasks;
 
 namespace RaspPiHub
 {
@@ -29,6 +31,8 @@ namespace RaspPiHub
         /// Initializes the singleton application object.  This is the first line of authored code
         /// executed, and as such is the logical equivalent of main() or WinMain().
         /// </summary>
+        
+        
         public App()
         {
             Microsoft.ApplicationInsights.WindowsAppInitializer.InitializeAsync(
@@ -109,12 +113,50 @@ namespace RaspPiHub
         {
             var deferral = e.SuspendingOperation.GetDeferral();
             //TODO: Save application state and stop any background activity
+            SaveApplicationConfiguration();
             deferral.Complete();
         }
-        private void LoadApplicationConfiguration()
+        private async void LoadApplicationConfiguration()
         {
-            string json = File.ReadAllText(System.IO.Directory.GetCurrentDirectory() + "/AppConfiguration/app.json");
+
+            string filePath = "AppConfiguration/app.json";
+
+            StorageFolder localFolder = ApplicationData.Current.LocalFolder;
+            var file = await localFolder.CreateFileAsync("app.json", CreationCollisionOption.OpenIfExists);
+
+            string json = "";
+
+            var existingContent = await FileIO.ReadTextAsync(file);
+            if (existingContent != null && existingContent != "")
+            {
+                json = existingContent;
+            }
+            else
+            {
+                json = File.ReadAllText(filePath);
+                await FileIO.WriteTextAsync(file, json);
+            }
+
+
             ApplicationConfiguration = JsonConvert.DeserializeObject<ApplicationConfiguration>(json);
+            
+        }
+        public async Task<bool> SaveApplicationConfiguration()
+        {
+            string filePath = "AppConfiguration/app.json";
+
+            //var file = await localFolder.GetFileAsync("app.json");
+            try
+            {
+                StorageFolder localFolder = ApplicationData.Current.LocalFolder;
+                var file = await localFolder.CreateFileAsync("app.json", CreationCollisionOption.OpenIfExists);
+                await FileIO.WriteTextAsync(file, JsonConvert.SerializeObject(ApplicationConfiguration));
+                return true;
+            }
+            catch(Exception ex)
+            {
+                return false;
+            }
             
         }
     }

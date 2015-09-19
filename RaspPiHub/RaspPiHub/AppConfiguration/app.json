@@ -1,10 +1,10 @@
 ﻿{
-  "StorageConnectionString": "StorageConnectionStringGoesHere",
-  "ServiceBusNamespace": "Foodie-ns",
-  "EventHubName": "foodie",
-  "PolicyName": "SendListen",
-  "PolicyKey": "GvGqqCyQ2rFT8musyzNSXIAD5ss/EOxL8mpHzRhLyes=",
+
+  "ServiceBusNamespace": "Enter Namespace",
+  "EventHubName": "Enter EH Name",
+  "PolicyName": "EH Policy",
+  "PolicyKey": "EH Policy Key",
   "PublisherName": "Device1",
-  "ConnectedSensors": {"bcfcc157-9111-4350-bff7-e02312629b6f": "HC-06"},
-  "DefaultVerificationCode":  "1234"
+  "ConnectedSensors": [],
+  "AzureVMIp":  "Azure Public IP"
 }
