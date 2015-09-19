@@ -6,5 +6,5 @@
   "PolicyKey": "Send Policy Key",
   "PublisherName": "Arbitrary Name",
   "ConnectedSensors": {},
-
+  "DefaultVerificationCode":  "1234"
 }
